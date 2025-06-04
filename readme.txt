@@ -1,0 +1,4 @@
+- Tipar a lista em diferentes tipos(4 tipos).
+- Separar cada lista dentro das pilhas.
+- Cada caixa deve haver apenas uma lista(Essa caixa deve ter o tamanho exato da lista, caso exceda o tamanho deverá criar uma nova caixa dentro da mesma pilha).
+- 	
