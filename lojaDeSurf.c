@@ -209,17 +209,16 @@ void add_produto_na_lista(char *tipo, char *descricao, int id, float valor){    
         return 0;
     }
 
-/* Se o usuário adicionar um tipo de produto que não tem caixa nem pilha, a função pilha cria uma caixa do tipo
-daquele produto, depois, a struct caixa, tem guardado os Ponteiros Início e Fim para a lista de produtos dentro
-dela, a função de criar caixa pega esses ponteiros e os passa por parâmetro para a função de criar lista de produtos,
-aí, a lista é iniciada com estes ponteiros. Caso haja uma pilha deste tipo que o usuário quer inserir, a função
-pilha irá buscar a pilha de caixas desse tipo, depois, apontar para o topo, o topo será a última caixa ainda não
-lotada, essa caixa apontará para a lista, a função de cirar listas recebe o ponteiro início e fim guardados na
-caixa, e nesta função o produto será adicionado. A variável da caixa que guarda a quantidade máxima, se chegar ao
-seu máximo, esperará pela nova entrada de produto, no próximo produto que vier, se na função pilha de caixas o tipo
-do produto contido nela apontar que o atual topo já está no seu máximo da capacidade, irá executar o bloco de código
-que cria uma nova caixa a partir da função de criar caixa, a caixa topo aponta para ela e ela receberá a nova lista
-a partir da função de criar lista.*/
+/* Se o usuário adicionar um tipo de produto que não tem caixa nem pilha, a função pilha pede a função de criar caixas para criar
+uma caixa do tipo daquele produto, depois, a struct caixa, tem guardado os Ponteiros Início e Fim para a lista de produtos dentro
+dela, a função de criar caixa pega esses ponteiros e os passa por parâmetro para a função de criar lista de produtos,aí, a lista
+é iniciada com estes ponteiros. Caso haja uma pilha deste tipo que o usuário quer inserir, a função pilha irá buscar  a pilha de 
+caixas desse tipo, depois, apontar para o topo, o topo será a última caixa ainda não lotada, essa caixa apontará para a lista, a 
+função de cirar listas recebe o ponteiro início e fim guardados na caixa, e nesta função o produto será adicionado. A variável da 
+caixa que guarda a quantidade máxima, se chegar ao seu máximo, esperará pela nova entrada de produto, no próximo produto que vier,
+se na função pilha de caixas o tipo do produto contido nela apontar que o atual topo já está no seu máximo da capacidade, irá 
+executar o bloco de código que cria uma nova caixa a partir da função de criar caixa, a caixa topo aponta para ela e ela receberá
+a nova lista a partir da função de criar lista.*/
 
 //Por este motivo, eu retirei os ponteiros Início e fim do Global e os Inseri em struct caixa, e esse texto será nossa ordem de funcionamento por função.
 
