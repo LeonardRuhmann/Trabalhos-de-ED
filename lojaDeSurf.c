@@ -1,8 +1,12 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-typedef struct NO   // lista de produtos à venda.
-{
+// #define PARAFINA 0
+// #define LEASH 1
+// #define QUILHA 2
+// #define DECK 3
+
+typedef struct NO{
     int id;
     char *tipo;
     char *descricao;
@@ -10,111 +14,150 @@ typedef struct NO   // lista de produtos à venda.
     struct NO * prox;
     struct NO * ant;
 }NO;
-
-typedef struct Caixa    // Caixa que contém lista de produtos.
+typedef struct Caixa
 {
     int id;
     char * tipo;
-    int tamanho_max;
+    int quantidade;
     struct Caixa * prox;
-    struct NO * lista;
-
-    struct lista *inicio;
-    struct lista *fim;
+    struct NO *inicio;
+    struct NO *fim;
 
 }Caixa;
-
-typedef struct Pilha    // Pilha de caixas, uma para cada tipo de produto.
+typedef struct Pilha
 {
     char * tipo;
     struct Caixa * topo;
 
-}Pilha;
+}Pilha; 
 
-int tam = 0;
-
-void imprimir(){    // Função de imprimir, (APENAS PARA TESTES).
-    NO *aux = inicio;
+void imprimir(Pilha * pilha){    // Função de imprimir, (APENAS PARA TESTES).
     printf("----- Loja de Surf - Tati Surf Co. ------\n");
+    if (pilha->topo == NULL) return;
+    
+    Caixa *caixa = pilha->topo;
 
-    for(int i=0; i<=tam; i++){
+    while (caixa != NULL) {
+        NO *aux = caixa->inicio;
+        while (aux != NULL) {
         printf("Tipo do produto: %s\n", aux->tipo);
         printf("Id: %d\n", aux->id);
         printf("Descrição: %s\n", aux->descricao);
         printf("Valor: %.2f\n", aux->valor);
-
-        aux = aux->prox;
+            aux = aux->prox;
+        }
+        caixa = caixa->prox;
     }
 }
-// void criar_pilha(){
-//     Caixa * caixa;
-// }
 
+// Essa função lida com o processo de adicionar um produto ao estoque da loja
+void gerenciar_estoque(Pilha * pilha, char * tipo){
 
-void criar_caixa(NO * lista, char * tipo){  // Função de criar caixas de produtos.
-    Caixa * caixa =  malloc(sizeof(caixa));
+    
+    if (pilha->topo == NULL || pilha->topo->quantidade == 0){// Caso seja a primeira caixa.
 
-    // Caso seja a primeira caixa.
-    caixa->lista = lista;
+        Caixa * nova_caixa =  inicializar_caixa(tipo);
+        add_produto_na_lista(tipo, &nova_caixa->inicio, &nova_caixa->fim);
+
+        pilha->topo = nova_caixa;
+        nova_caixa->prox = pilha->topo;
+        
+    } else { // Caso não seja a primeira caixa
+        add_produto_na_lista(tipo, &pilha->topo->inicio, &pilha->topo->fim);
+    }
+    pilha->topo->quantidade--;
+ }
+
+ Caixa * inicializar_caixa(char * tipo){  // Função de criar caixas de produtos.
+    
+    Caixa * caixa =  malloc(sizeof(Caixa));
+    caixa->id = rand() % 10000;
     caixa->tipo = tipo;
+    caixa->quantidade = obter_tamanho_max_da_caixa(tipo);
     caixa->prox = NULL;
+    caixa->inicio = NULL;
+    caixa->fim = NULL;
+    return caixa;
 }
 
-void add_produto_na_lista(char *tipo, char *descricao, int id, float valor){    //Adiciona um novo produto à lista.
-    NO *novo = malloc(sizeof(NO));
+ 
+void add_produto_na_lista(char *tipo, NO ** inicio, NO **fim){
+    NO *Novo_produto = malloc(sizeof(NO));
+    char descricao[100];
+    float valor;
+
+    printf("\nDiga uma breve descricao do produto:\n");
+    scanf(" %[^\n]", descricao);
+
+    printf("Agora, Diga qual o valor do produto:\n");
+    scanf("%f", &valor);
 
     // Novo produto recebe suas características.
-    novo->tipo = tipo;
-    novo->descricao = descricao;
-    novo->id = id;
-    novo->valor = valor;
+    Novo_produto->tipo = tipo;
+    Novo_produto->descricao = strdup(descricao);
+    Novo_produto->id = rand() % 10000;
+    Novo_produto->valor = valor;
+    Novo_produto->prox = NULL;
+    Novo_produto->ant = NULL;
 
-    if(inicio == NULL){     // Se for o primeiro produto.
-        inicio = novo;
-        fim = novo;
+    if(*inicio == NULL) {
+        *inicio = Novo_produto;
+        *fim = Novo_produto;
 
+    } else {
+
+        NO * aux = *inicio;
         
-        novo->prox = NULL;
-        novo->ant = NULL;
-
-    } else {    // Caso haja mais de um produto na lista.
-
-        NO * aux = inicio;
-
-        if (novo->valor > fim->valor){      // Caso1: Adiciona no fim.
-            fim->prox = novo;
-            novo->ant = fim;
-            fim = novo;
-
-        } else if(novo->valor < aux->valor){    // Caso2: Adiciona antes do início.
-            aux->ant = novo;
-            novo->prox = aux;
-            novo->ant = NULL;
-            inicio = novo;
-
+        if (Novo_produto->valor > (*fim)->valor){      // Caso1: Adiciona no fim.
+            (*fim)->prox = Novo_produto;
+            Novo_produto->ant = *fim;
+            *fim = Novo_produto;
+            
+        } else if(Novo_produto->valor < aux->valor){    // Caso2: Adiciona antes do início.
+            aux->ant = Novo_produto;
+            Novo_produto->prox = aux;
+            Novo_produto->ant = NULL;
+            *inicio = Novo_produto;
+            
         } else {
-
-            while (novo->valor >= aux->valor)
+            
+            while (Novo_produto->valor >= aux->valor)
             {    
                 aux = aux->prox;
             }
-            aux->ant->prox = novo;
-            novo->ant = aux->ant;
-            novo->prox = aux;
-            aux->ant = novo;
+            aux->ant->prox = Novo_produto;
+            Novo_produto->ant = aux->ant;
+            Novo_produto->prox = aux;
+            aux->ant = Novo_produto;
         }
-        tam++;
     }
+}
+
+ int obter_tamanho_max_da_caixa(char * tipo){
+
+    if (strcmp(tipo, "Parafina") == 0) return 50;
+    if (strcmp(tipo, "Leash") == 0) return 25;
+    if (strcmp(tipo, "Quilha") == 0) return 10;
+    if (strcmp(tipo, "Deck") == 0) return 5;
+
+    return -1; // tipo inválido
+
  }
 
+ int main(){
 
-    int main(){
-
-        // add_produto_na_lista("Quilha", "Fibra", 123, 120.50);
-        // add_produto_na_lista("Parafina", "Agua fria", 321, 20);
-        // add_produto_na_lista("Leash", "BalyGrip", 111, 90); //
-        // add_produto_na_lista("Quilha", "repetido", 145, 90); // 2 20 90L 90Q 120
-        // add_produto_na_lista("Parafina", "Ruim", 893, 2);
+        Pilha * Leash = malloc(sizeof(Pilha));
+        Pilha * Quilha = malloc(sizeof(Pilha));;
+        Pilha * Parafina = malloc(sizeof(Pilha));;
+        Pilha * Deck = malloc(sizeof(Pilha));;
+        Leash->topo = NULL;
+        Leash->tipo = "Leash";
+        Quilha->topo = NULL;
+        Quilha->tipo = "Quilha";
+        Parafina->topo = NULL;
+        Parafina->tipo = "Parafina";
+        Deck->topo = NULL;
+        Deck->tipo = "Deck";
 
                                             /*--------MENU INTERATIVO--------*/
         int valid = 1;      // Garante que o loop ocorra no menu.
@@ -123,91 +166,43 @@ void add_produto_na_lista(char *tipo, char *descricao, int id, float valor){    
 
         while (valid)
         {
+            // Info de produtos passado pelo ususário.
+
             int op;     // Tipo de produto que o usuário selecionar para operar no menu.
 
-            printf("\nQual o tipo do novo produto voce deseja adicionar ao estoque da loja?\n");
-            scanf("%d", &op);
+            printf("\nQual o tipo do novo produto voce deseja adicionar ao estoque da loja?\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair");
+            scanf("%i", &op);
 
             switch (op)
             {
-                char *descr;
-                float val;
-                int id;
-
-            case 0:     // Usuário deseja encerrar o programa.
-                valid = 0;
-                break;
-
-            case 1:     // O usuário deseja adicionar Quilha ao estoque.
-                printf("Voce deseja adicionar Quilha ao estoque:\nDiga a descricao:\n");
-                scanf("%c", descr);
-
-                printf("Agora, diga qual a ID do produto:\n");
-                scanf("%d", id);
-
-                printf("Agora, Diga qual o valor do produto:\n");
-                scanf("%d", val);
-
-
-                add_produto_na_lista("Quilha", descr, id, val);
+                case 0:     // O usuário deseja adicionar Parafina ao estoque.
+                        gerenciar_estoque(Parafina, "Parafina");
+                        break;
+                case 1:  // O usuário deseja adicionar Leash ao estoque.
+                        gerenciar_estoque(Leash, "Leash");
+                        break;
+                case 2:     
+                        gerenciar_estoque(Quilha, "Quilha");
+                    break;
+                case 3:     // O usuário deseja adicionar Deck ao estoque.
+                        gerenciar_estoque(Deck, "Deck");
+                    break;
+                case 4:   // Usuário deseja encerrar o programa.
+                    printf("Programa encerrado...\n");
+                    valid = 0;
+                    break;
                 
-                break;
-            
-            case 2:     // O usuário deseja adicionar Leash ao estoque.
-            printf("Voce deseja adicionar Leash ao estoque:\nDiga a descricao:\n");
-                scanf("%c", descr);
-
-                printf("Agora, diga qual a ID do produto:\n");
-                scanf("%d", id);
-
-                printf("Agora, Diga qual o valor do produto:\n");
-                scanf("%d", val);
-
-
-                add_produto_na_lista("Leash", descr, id, val);
-
-                break;
-            
-            case 3:     // O usuário deseja adicionar Parafina ao estoque.
-            printf("Voce deseja adicionar Parafina ao estoque:\nDiga a descricao:\n");
-                scanf("%c", descr);
-
-                printf("Agora, diga qual a ID do produto:\n");
-                scanf("%d", id);
-
-                printf("Agora, Diga qual o valor do produto:\n");
-                scanf("%d", val);
-
-
-                add_produto_na_lista("Parafina", descr, id, val);
-
-                break;
-            
-            case 4:     // O usuário deseja adicionar Deck ao estoque.
-            printf("Voce deseja adicionar Deck ao estoque:\nDiga a descricao:\n");
-                scanf("%c", descr);
-
-                printf("Agora, diga qual a ID do produto:\n");
-                scanf("%d", id);
-
-                printf("Agora, Diga qual o valor do produto:\n");
-                scanf("%d", val);
-
-
-                add_produto_na_lista("Deck", descr, id, val);
-
-                break;
-            
-            default:
-                break;
+                default:
+                    break;
             }
         }
-        
+        imprimir(Parafina);
+        imprimir(Leash);
+        imprimir(Quilha);
+        imprimir(Deck);
 
-
-        imprimir();
         return 0;
-    }
+}
 
 /* Se o usuário adicionar um tipo de produto que não tem caixa nem pilha, a função pilha pede a função de criar caixas para criar
 uma caixa do tipo daquele produto, depois, a struct caixa, tem guardado os Ponteiros Início e Fim para a lista de produtos dentro
@@ -221,124 +216,3 @@ executar o bloco de código que cria uma nova caixa a partir da função de cria
 a nova lista a partir da função de criar lista.*/
 
 //Por este motivo, eu retirei os ponteiros Início e fim do Global e os Inseri em struct caixa, e esse texto será nossa ordem de funcionamento por função.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//     if(pos >= 0 & pos <= tam){
-//         //adiciona!
-//         novo->nome = nome;
-//         novo->prox = NULL;
-//         novo->ant = NULL;
-
-//         // todos casos de insercao
-//         if(inicio == NULL){
-//         }else if(pos == 0){
-//             //lista nao esta vazia e eu quero adicionar no inicio
-//             novo->prox = inicio;
-//             inicio->ant = novo;
-//             inicio = novo;
-//         }else if(pos == tam){
-//             //lista nao esta vazia e eu quero adicionar no fim
-//             fim->prox = novo;
-//             novo->ant = fim;
-//             fim = novo;
-//         }else{
-//             //caso do "meio da lista""
-//             NO * aux = inicio;
-//             for(int i = 0; i<pos; i++){
-//                 aux = aux->prox;
-//             }
-//             novo->prox = aux;
-//             novo->ant = aux->ant;
-//             //novo->ant->prox = novo;
-//             aux->ant->prox = novo;
-//             aux->ant = novo;
-//         }
-//         tam++;
-
-//     }else{
-//         printf("Insercao incorreta. Posicao invalida!\n");
-//     }    
-
-// }
-
-// void imprimir_um_filme(NO *p){
-//     if(p != NULL){
-//         printf("Endereço p passado por parametro: %p", p);
-//         printf("\n FILME REMOVIDO COM SUCESSO. DADOS:\n");    
-//     }
-// }
-
-// void remover(int pos){
-//     if(pos >= 0 && pos < tam){
-        
-//         if(inicio != NULL){ //tam>0
-//             NO * lixo;
-//             if(pos == 0){ //remover no inicio  
-//                 lixo = inicio;
-//                 inicio = inicio->prox;
-//                 if(tam == 1){
-//                     fim = NULL;
-//                 }
-//                 if(tam > 1){
-//                     inicio->ant = NULL;
-//                 }
-//             }else if(pos == tam-1){ //remover no fim
-//                 lixo = fim;
-//                 fim->ant->prox = NULL;
-//                 fim = fim->ant;
-
-//             }else{
-//                 //"meio"
-//                 lixo = inicio;
-//                 for(int i = 0; i <pos; i++){
-//                     lixo = lixo->prox;
-//                 }
-//                 lixo->ant->prox = lixo->prox;
-//                 lixo->prox->ant = lixo->ant;
-//             }
-
-//             tam--;
-//             imprimir_um_filme(lixo);
-//             free(lixo);
-
-//         }else{
-//             printf("Lista esta vazia! \n");
-//         }
-
-
-//     }else{
-//         printf("Posicao invalida! \n");
-//     }
-// }
-
-
-
-// int main(){
-//     add("Branca...", "", 2.0, 30, 0, "animacao", 0);
-//     add("Minecraft...", "", 1.0, 15, 0, "animacao", 0);
-//     add("Lilo...", "", 2.0, 60, 0, "live action", 0);
-//     add("Conclave...", "", 3.0, 100, 0, "drama", 3);
-//     add("Transformers ...", "", 2.0, 60, 14, "ação", 3);
-
-//     remover(0);
-//     printf("Filmes que ainda estão em cartaz:\n");
-//     imprimir();
-//     return 0;
-// }
