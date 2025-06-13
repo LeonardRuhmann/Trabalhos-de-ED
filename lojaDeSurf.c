@@ -33,11 +33,16 @@ typedef struct Pilha
 }Pilha;
 
 // Protótipos de função (Para que o compilador conheca de antemão quem são as funções):
-    Caixa * inicializar_caixa(char * tipo);
-    void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista);
-    int obter_tamanho_max_da_caixa(char * tipo);
-    void gerenciar_estoque(Pilha * pilha, char * tipo);
-    void imprimir(Pilha * pilha);
+Caixa * inicializar_caixa(char * tipo);
+void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista);
+int obter_tamanho_max_da_caixa(char * tipo);
+void gerenciar_estoque(Pilha * pilha, char * tipo);
+void imprimir(Pilha * pilha);
+
+void Limpa_Buffer_i () {
+    int a;
+    while ((a = getchar()) != '\n' && a != EOF);
+}
 
 // Função de criar caixas de produtos.
 Caixa * inicializar_caixa(char * tipo) {
@@ -54,6 +59,8 @@ Caixa * inicializar_caixa(char * tipo) {
 // Essa função lida com o processo de adicionar um produto ao estoque da loja. Eventualmente, revenda, pesquisa ou manipulação de estoque.
 void gerenciar_estoque(Pilha * pilha, char * tipo) {
 
+    Limpa_Buffer_i();   // Limpar fila de buffer de entradas do usuário.
+
     // PRIMEIRO CASO: Usuário deseja estocar um produto que ainda não tem pilha e caixa, ou, tem, mas, a caixa no topo está lotada.
     if (pilha->topo == NULL || pilha->topo->espaco_restante == 0) {
         // Inicializa uma nova caixa.
@@ -68,18 +75,28 @@ void gerenciar_estoque(Pilha * pilha, char * tipo) {
         add_produto_na_lista(tipo, &pilha->topo->inicio_da_lista, &pilha->topo->fim_da_lista);
     }
     pilha->topo->espaco_restante--;
- }
+}
 
- void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) {
+void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) {
     NO *Novo_produto = malloc(sizeof(NO));
-    char descricao[100];
+    char descricao[100], buffer[100];
     float valor;
 
-    printf("\nDiga uma breve descricao do produto:\n");
-    scanf(" %[^\n]", descricao);
+    // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[100].
+    printf("\nDiga uma breve descricao do produto (apenas 99 letras serao lidas):\n");
+    fgets(buffer, sizeof(buffer), stdin);
+    sscanf(buffer, "%[^\n]", descricao);
+    Limpa_Buffer_i();   // Caso o danado do usuário digite 99+ cacarteres.
 
-    printf("Agora, Diga qual o valor do produto:\n");
-    scanf("%f", &valor);
+    printf("Agora, Diga qual o valor do produto (Use ponto final para diferenciar Reais de Centavos, Ex: 2.99, nao 2,99):\n");
+    while (1) {
+        fgets(buffer, sizeof(buffer), stdin);
+
+        if (sscanf(buffer, "%f", &valor) == 1) {
+        break;
+        }
+        printf("Valor inválido! Por favor, digite um número válido (ex: 19.99)\n");
+    }
 
     // Novo produto recebe suas características.
     Novo_produto->tipo = tipo;
@@ -110,7 +127,7 @@ void gerenciar_estoque(Pilha * pilha, char * tipo) {
             
         } else {        // Caso3: Adiciona ao meio da lista.
             
-            while (Novo_produto->valor >= aux->valor)
+            while (aux != NULL && Novo_produto->valor >= aux->valor)
             {    
                 aux = aux->prox;
             }
@@ -130,7 +147,7 @@ int obter_tamanho_max_da_caixa(char * tipo) {
     if (strcmp(tipo, "Deck") == 0) return 5;
 
     return -1; // tipo inválido
-    }
+}
 
 // Função de impressão de produtos por pilha
 void imprimir(Pilha * pilha) {
@@ -166,12 +183,13 @@ void imprimir(Pilha * pilha) {
     printf("----- FIM DA PILHA %s -----\n", pilha->tipo);
 }
 
- int main() {
+int main() {
 
+    // Definindo pilhas.
     Pilha * Leash = malloc(sizeof(Pilha));
-    Pilha * Quilha = malloc(sizeof(Pilha));;
-    Pilha * Parafina = malloc(sizeof(Pilha));;
-    Pilha * Deck = malloc(sizeof(Pilha));;
+    Pilha * Quilha = malloc(sizeof(Pilha));
+    Pilha * Parafina = malloc(sizeof(Pilha));
+    Pilha * Deck = malloc(sizeof(Pilha));
     Leash->topo = NULL;
     Leash->tipo = "Leash";
     Quilha->topo = NULL;
@@ -189,23 +207,36 @@ void imprimir(Pilha * pilha) {
     while (valid)
     {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
+        char buffer[10];
 
-        printf("\nQual o tipo do novo produto voce deseja adicionar ao estoque da loja?\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair");
-        scanf("%i", &op);
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja? (Opcoes de 0 a 4)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair\n");
+        
+        fgets(buffer, sizeof(buffer), stdin);
+
+        // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[10].
+        if (sscanf(buffer, "%i", &op) != 1) {
+            printf("\n======ENTRADA INVALIDA, NAO DIGITE LETRAS, APENAS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n");
+            Limpa_Buffer_i();   // Caso o danado digite mais que 10 caracteres. E dá mais segurança.
+            continue;
+        }
 
         switch (op)
         {
             case 0:     // O usuário deseja adicionar Parafina ao estoque.
-                    gerenciar_estoque(Parafina, "Parafina");
-                    break;
+                printf("Voce selecionou Parafina.\n");
+                gerenciar_estoque(Parafina, "Parafina");
+                break;
             case 1:     // O usuário deseja adicionar Leash ao estoque.
-                    gerenciar_estoque(Leash, "Leash");
-                    break;
-            case 2:     
-                    gerenciar_estoque(Quilha, "Quilha");
+                printf("Voce selecionou Leash.\n");
+                gerenciar_estoque(Leash, "Leash");
+                break;
+            case 2:     // O usuário deseja adicionar Quilha ao estoque.
+                printf("Voce selecionou Quilha.\n");
+                gerenciar_estoque(Quilha, "Quilha");
                 break;
             case 3:     // O usuário deseja adicionar Deck ao estoque.
-                    gerenciar_estoque(Deck, "Deck");
+                printf("Voce selecionou Deck.\n");
+                gerenciar_estoque(Deck, "Deck");
                 break;
             case 4:     // Usuário deseja encerrar o programa.
                 printf("Programa encerrado...\n");
@@ -213,8 +244,10 @@ void imprimir(Pilha * pilha) {
                 break;
             
             default:
+                printf("\n======POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4======\n");
                 break;
         }
+        
     }
     imprimir(Parafina);
     imprimir(Leash);
