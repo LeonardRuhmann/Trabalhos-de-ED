@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include <string.h>
 
 // #define PARAFINA 0
 // #define LEASH 1
@@ -22,32 +23,51 @@ typedef struct Caixa
     struct Caixa * prox;
     struct NO *inicio;
     struct NO *fim;
-
+    
 }Caixa;
 typedef struct Pilha
 {
     char * tipo;
     struct Caixa * topo;
-
+    
 }Pilha; 
 
-void imprimir(Pilha * pilha){    // Função de imprimir, (APENAS PARA TESTES).
-    printf("----- Loja de Surf - Tati Surf Co. ------\n");
-    if (pilha->topo == NULL) return;
+void imprimir(Pilha * pilha);
+void gerenciar_estoque(Pilha * pilha, char * tipo);
+Caixa * inicializar_caixa(char * tipo);
+void add_produto_na_lista(char *tipo, NO ** inicio, NO **fim);
+int obter_tamanho_max_da_caixa(char * tipo);
+
+void imprimir(Pilha * pilha) {
+    printf("\n----- PILHA DE PRODUTOS: %s -----\n", pilha->tipo);
+
+    if (pilha->topo == NULL) {
+        printf(">> PILHA VAZIA <<\n");
+        return;
+    }
     
     Caixa *caixa = pilha->topo;
+    int num_caixa = 1;
 
     while (caixa != NULL) {
+        printf("\n--- Caixa ID %d | Tipo: %s | Espaço restante: %d ---\n", caixa->id, caixa->tipo, caixa->quantidade);
+
         NO *aux = caixa->inicio;
-        while (aux != NULL) {
-        printf("Tipo do produto: %s\n", aux->tipo);
-        printf("Id: %d\n", aux->id);
-        printf("Descrição: %s\n", aux->descricao);
-        printf("Valor: %.2f\n", aux->valor);
-            aux = aux->prox;
+        if (aux == NULL) {
+            printf(">> Caixa vazia <<\n");
+        } else {
+            while (aux != NULL) {
+                printf("  Produto ID: %d\n", aux->id);
+                printf("    Tipo: %s\n", aux->tipo);
+                printf("    Descrição: %s\n", aux->descricao);
+                printf("    Valor: %.2f\n", aux->valor);
+                aux = aux->prox;
+            }
         }
         caixa = caixa->prox;
+        num_caixa++;
     }
+    printf("----- FIM DA PILHA %s -----\n", pilha->tipo);
 }
 
 // Essa função lida com o processo de adicionar um produto ao estoque da loja
@@ -59,8 +79,8 @@ void gerenciar_estoque(Pilha * pilha, char * tipo){
         Caixa * nova_caixa =  inicializar_caixa(tipo);
         add_produto_na_lista(tipo, &nova_caixa->inicio, &nova_caixa->fim);
 
-        pilha->topo = nova_caixa;
         nova_caixa->prox = pilha->topo;
+        pilha->topo = nova_caixa;
         
     } else { // Caso não seja a primeira caixa
         add_produto_na_lista(tipo, &pilha->topo->inicio, &pilha->topo->fim);
@@ -141,7 +161,6 @@ void add_produto_na_lista(char *tipo, NO ** inicio, NO **fim){
     if (strcmp(tipo, "Deck") == 0) return 5;
 
     return -1; // tipo inválido
-
  }
 
  int main(){
@@ -170,7 +189,7 @@ void add_produto_na_lista(char *tipo, NO ** inicio, NO **fim){
 
             int op;     // Tipo de produto que o usuário selecionar para operar no menu.
 
-            printf("\nQual o tipo do novo produto voce deseja adicionar ao estoque da loja?\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair");
+            printf("\nQual o tipo do novo produto voce deseja adicionar ao estoque da loja?\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair\n");
             scanf("%i", &op);
 
             switch (op)
