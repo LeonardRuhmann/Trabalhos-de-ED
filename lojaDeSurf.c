@@ -2,11 +2,6 @@
 #include<stdlib.h>
 #include<string.h>
 
-// #define PARAFINA 0
-// #define LEASH 1
-// #define QUILHA 2
-// #define DECK 3
-
 typedef struct NO{
     int id;
     char *tipo;
@@ -59,8 +54,6 @@ Caixa * inicializar_caixa(char * tipo) {
 // Essa função lida com o processo de adicionar um produto ao estoque da loja. Eventualmente, revenda, pesquisa ou manipulação de estoque.
 void gerenciar_estoque(Pilha * pilha, char * tipo) {
 
-    Limpa_Buffer_i();   // Limpar fila de buffer de entradas do usuário.
-
     // PRIMEIRO CASO: Usuário deseja estocar um produto que ainda não tem pilha e caixa, ou, tem, mas, a caixa no topo está lotada.
     if (pilha->topo == NULL || pilha->topo->espaco_restante == 0) {
         // Inicializa uma nova caixa.
@@ -71,10 +64,13 @@ void gerenciar_estoque(Pilha * pilha, char * tipo) {
         nova_caixa->prox = pilha->topo;
         pilha->topo = nova_caixa;
         
-    } else { // SEGUNDO CASO: Caso hajam caixas na pilha mas na caixa topo ainda resta espaço.
+    } else {
+        // SEGUNDO CASO: Caso hajam caixas na pilha mas na caixa topo ainda resta espaço.
         add_produto_na_lista(tipo, &pilha->topo->inicio_da_lista, &pilha->topo->fim_da_lista);
+        
     }
-    pilha->topo->espaco_restante--;
+    pilha->topo->espaco_restante--; 
+
 }
 
 void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) {
@@ -84,23 +80,24 @@ void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) 
 
     // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[100].
     printf("\nDiga uma breve descricao do produto (apenas 99 letras serao lidas):\n");
+    
     fgets(buffer, sizeof(buffer), stdin);
-    sscanf(buffer, "%[^\n]", descricao);
-    Limpa_Buffer_i();   // Caso o danado do usuário digite 99+ cacarteres.
+    if (!strchr(buffer, '\n')) Limpa_Buffer_i();
+    buffer[strcspn(buffer, "\n")] = '\0';
+    Novo_produto->descricao = strdup(buffer); 
 
     printf("Agora, Diga qual o valor do produto (Use ponto final para diferenciar Reais de Centavos, Ex: 2.99, nao 2,99):\n");
     while (1) {
         fgets(buffer, sizeof(buffer), stdin);
 
         if (sscanf(buffer, "%f", &valor) == 1) {
-        break;
+            break;
         }
         printf("Valor inválido! Por favor, digite um número válido (ex: 19.99)\n");
     }
 
     // Novo produto recebe suas características.
     Novo_produto->tipo = tipo;
-    Novo_produto->descricao = strdup(descricao);
     Novo_produto->id = rand() % 10000;
     Novo_produto->valor = valor;
     Novo_produto->prox = NULL;
@@ -114,7 +111,7 @@ void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) 
 
         NO * aux = *inicio_da_lista;
         
-        if (Novo_produto->valor > (*fim_da_lista)->valor) {      // Caso1: Adiciona no fim da lista.
+        if (Novo_produto->valor >= (*fim_da_lista)->valor) {      // Caso1: Adiciona no fim da lista.
             (*fim_da_lista)->prox = Novo_produto;
             Novo_produto->ant = *fim_da_lista;
             *fim_da_lista = Novo_produto;
@@ -126,7 +123,7 @@ void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) 
             *inicio_da_lista = Novo_produto;
             
         } else {        // Caso3: Adiciona ao meio da lista.
-            
+
             while (aux != NULL && Novo_produto->valor >= aux->valor)
             {    
                 aux = aux->prox;
@@ -244,10 +241,9 @@ int main() {
                 break;
             
             default:
-                printf("\n======POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4======\n");
+                printf("\n====== POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4 ======\n");
                 break;
         }
-        
     }
     imprimir(Parafina);
     imprimir(Leash);
