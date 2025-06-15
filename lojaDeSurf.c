@@ -2,6 +2,11 @@
 #include<stdlib.h>
 #include<string.h>
 
+# define PREFIXO_ID_PRODUTO_PARAFINA 100000
+# define PREFIXO_ID_PRODUTO_QUILHA 200000
+# define PREFIXO_ID_PRODUTO_LEASH 300000
+# define PREFIXO_ID_PRODUTO_DECK 400000
+
 typedef struct NO{
     int id;
     char *tipo;
@@ -30,9 +35,19 @@ typedef struct Pilha
 // Protótipos de função (Para que o compilador conheca de antemão quem são as funções):
 Caixa * inicializar_caixa(char * tipo);
 void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista);
+int id_unica_caixa (char * tipo);
+int id_unica_produto (char * tipo);
 int obter_tamanho_max_da_caixa(char * tipo);
 void gerenciar_estoque(Pilha * pilha, char * tipo);
 void imprimir(Pilha * pilha);
+void Liberar_memoria(Pilha * pilha);
+
+//  Futuras versões os contadores incrementais de IDs serão encapsulados em Structs.
+//  Contadores Incrementais para IDs de produtos.
+int id_inc_parafina = 1, id_inc_quilha = 1, id_inc_leash = 1, id_inc_deck = 1;
+
+//  Contadores Incrementais para IDs de caixas.
+int id_inc_caixa_parafina = 1, id_inc_caixa_quilha = 1, id_inc_caixa_leash = 1, id_inc_caixa_deck = 1;
 
 void Limpa_Buffer_i () {
     int a;
@@ -42,7 +57,7 @@ void Limpa_Buffer_i () {
 // Função de criar caixas de produtos.
 Caixa * inicializar_caixa(char * tipo) {
     Caixa * caixa =  malloc(sizeof(Caixa));
-    caixa->id = rand() % 10000;
+    caixa->id = id_unica_caixa(tipo);
     caixa->tipo = tipo;
     caixa->espaco_restante = obter_tamanho_max_da_caixa(tipo);
     caixa->prox = NULL;
@@ -75,7 +90,7 @@ void gerenciar_estoque(Pilha * pilha, char * tipo) {
 
 void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) {
     NO *Novo_produto = malloc(sizeof(NO));
-    char descricao[100], buffer[100];
+    char buffer[100];
     float valor;
 
     // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[100].
@@ -98,7 +113,7 @@ void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista) 
 
     // Novo produto recebe suas características.
     Novo_produto->tipo = tipo;
-    Novo_produto->id = rand() % 10000;
+    Novo_produto->id = id_unica_produto(Novo_produto->tipo);
     Novo_produto->valor = valor;
     Novo_produto->prox = NULL;
     Novo_produto->ant = NULL;
@@ -180,6 +195,93 @@ void imprimir(Pilha * pilha) {
     printf("----- FIM DA PILHA %s -----\n", pilha->tipo);
 }
 
+// Função responsável por liberar a memória de tudo que foi alocado ao fechar o programa.
+void Liberar_memoria(Pilha * pilha) {
+    if (pilha->topo == NULL) return;
+
+    Caixa *caixa_atual = pilha->topo;
+    
+    while (caixa_atual != NULL)
+    {
+        NO * produto_atual = caixa_atual->inicio_da_lista;
+        NO * aux_produto;
+
+        while (produto_atual != NULL)
+        {
+            aux_produto = produto_atual->prox;
+            if (produto_atual->descricao != NULL) {
+                free(produto_atual->descricao);
+            }
+            free(produto_atual);
+            produto_atual = aux_produto;
+        }
+        Caixa * aux_caixa = caixa_atual->prox;
+        free(caixa_atual);
+        caixa_atual = aux_caixa;
+    }
+}
+
+// Função responsável por criar uma nova id para o produto de maneira incremental. (Ainda em processo de Melhorias)
+int id_unica_produto (char * tipo) {
+    int pfixo, nova_id;
+    if (strcmp(tipo, "Parafina") == 0) { 
+        pfixo = PREFIXO_ID_PRODUTO_PARAFINA;
+        nova_id = pfixo + id_inc_parafina;
+        id_inc_parafina ++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Leash") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_LEASH;
+        nova_id = pfixo + id_inc_leash;
+        id_inc_leash ++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Quilha") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_QUILHA;
+        nova_id = pfixo + id_inc_quilha;
+        id_inc_quilha++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Deck") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_DECK;
+        nova_id = pfixo + id_inc_deck;
+        id_inc_deck++;
+        return nova_id;
+    }
+
+    return -1;  // Excessão será implementada em breve.
+}
+
+int id_unica_caixa (char * tipo) {
+    int pfixo, nova_id;
+    if (strcmp(tipo, "Parafina") == 0) { 
+        pfixo = PREFIXO_ID_PRODUTO_PARAFINA;
+        nova_id = pfixo + id_inc_caixa_parafina;
+        id_inc_caixa_parafina ++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Leash") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_LEASH;
+        nova_id = pfixo + id_inc_caixa_leash;
+        id_inc_caixa_leash ++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Quilha") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_QUILHA;
+        nova_id = pfixo + id_inc_caixa_quilha;
+        id_inc_caixa_quilha++;
+        return nova_id;
+    }
+    if (strcmp(tipo, "Deck") == 0) {
+        pfixo = PREFIXO_ID_PRODUTO_DECK;
+        nova_id = pfixo + id_inc_caixa_deck;
+        id_inc_caixa_deck++;
+        return nova_id;
+    }
+
+    return -1;  // Excessão será implementada em breve para novas versões.
+}
+
 int main() {
 
     // Definindo pilhas.
@@ -206,7 +308,7 @@ int main() {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
         char buffer[10];
 
-        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja? (Opcoes de 0 a 4)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Sair\n");
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 5)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Sair\n");
         
         fgets(buffer, sizeof(buffer), stdin);
 
@@ -235,20 +337,29 @@ int main() {
                 printf("Voce selecionou Deck.\n");
                 gerenciar_estoque(Deck, "Deck");
                 break;
-            case 4:     // Usuário deseja encerrar o programa.
+            case 4:     //Usuário deseja imprimir todos os produtos do estoque.
+                imprimir(Parafina);
+                imprimir(Leash);
+                imprimir(Quilha);
+                imprimir(Deck);
+                break;
+            case 5:     // Usuário deseja encerrar o programa.
                 printf("Programa encerrado...\n");
                 valid = 0;
+                Liberar_memoria(Parafina);
+                free(Parafina);
+                Liberar_memoria(Leash);
+                free(Leash);
+                Liberar_memoria(Quilha);
+                free(Quilha);
+                Liberar_memoria(Deck);
+                free(Deck);
                 break;
             
             default:
-                printf("\n====== POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4 ======\n");
+                printf("\n======POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4======\n");
                 break;
         }
     }
-    imprimir(Parafina);
-    imprimir(Leash);
-    imprimir(Quilha);
-    imprimir(Deck);
-
     return 0;
 }
