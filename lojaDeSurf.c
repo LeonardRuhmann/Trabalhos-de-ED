@@ -39,7 +39,7 @@ int id_unica_caixa (char * tipo);
 int id_unica_produto (char * tipo);
 int obter_tamanho_max_da_caixa(char * tipo);
 void gerenciar_estoque(Pilha * pilha, char * tipo);
-void imprimir(Pilha * pilha);
+void imprimir_p_tipo(Pilha * Tipo);
 void Liberar_memoria(Pilha * pilha);
 
 //  Futuras versões os contadores incrementais de IDs serão encapsulados em Structs.
@@ -162,37 +162,72 @@ int obter_tamanho_max_da_caixa(char * tipo) {
 }
 
 // Função de impressão de produtos por pilha
-void imprimir(Pilha * pilha) {
-    printf("\n----- PILHA DE PRODUTOS: %s -----\n", pilha->tipo);
-
-    if (pilha->topo == NULL) {
-        printf(">> PILHA VAZIA <<\n");
+void imprimir_p_tipo (Pilha *Tipo) {
+    printf("\n           ======= EXIBINDO TODOS OS PRODUTOS DO TIPO %s =======\n", Tipo->tipo);
+    if (Tipo->topo == NULL) {
+    printf("\n            XX | NAO HA CAIXAS DE PRODUTOS PARA O TIPO %s | XX\n", Tipo->tipo);
         return;
     }
+
+    Caixa *Caixa = Tipo->topo;
+    int N_caixa = 1;
     
-    Caixa *caixa = pilha->topo;
-    int num_caixa = 1;
-
-    while (caixa != NULL) {
-        printf("\n--- Caixa ID %d | Tipo: %s | Espaço restante: %d ---\n", caixa->id, caixa->tipo, caixa->espaco_restante);
-
-        NO *aux = caixa->inicio_da_lista;
-        if (aux == NULL) {
-            printf(">> Caixa vazia <<\n");
-        } else {
-            while (aux != NULL) {
-                printf("  Produto ID: %d\n", aux->id);
-                printf("    Tipo: %s\n", aux->tipo);
-                printf("    Descrição: %s\n", aux->descricao);
-                printf("    Valor: %.2f\n", aux->valor);
-                aux = aux->prox;
-            }
+    while (Caixa != NULL)
+    {
+        NO *Produto = Caixa->inicio_da_lista;
+        printf("------- CAIXA NUMERO: %d | TIPO: %s | ID: %d | ESPACO RESTANTE: %i -------\n", N_caixa, Caixa->tipo, Caixa->id, Caixa->espaco_restante);
+        printf("                            ---- PRODUTOS ----\n");
+        
+        while (Produto != NULL)
+        {
+            printf("                        | Tipo:............. %s\n", Produto->tipo);
+            printf("                        | Descricao:........ %s\n", Produto->descricao);
+            printf("                        | Valor:............ %.2f Reais\n", Produto->valor);
+            printf("                        | ID:............... %i\n", Produto->id);
+            printf("                        |\n");
+            Produto = Produto->prox;
         }
-        caixa = caixa->prox;
-        num_caixa++;
+        Caixa = Caixa->prox;
+        N_caixa++;
     }
+    printf("                   ------- FIM DA PILHA DE %s -------\n", Tipo->tipo);
+}
 
-    printf("----- FIM DA PILHA %s -----\n", pilha->tipo);
+void Menu_imprimir_p_tipo (Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck) {
+    printf("\n---------------------------------------MENU DE EXIBIR POR TIPO-----------------------------------------");
+    printf("\nVoce deseja exibir todos os produtos pelo tipo de sua escolha.\nDigite um numero no menu que corresponde ao tipo de produto que voce deseja que seja exibido do estoque:\n");
+    printf("0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4- Voltar ao Menu inicial.\nSua Escolha: ");
+    int op;
+    char buffer[100];
+
+        fgets(buffer, sizeof(buffer), stdin);
+    
+    if (sscanf(buffer, "%i", &op) != 1) {
+        printf("\n======ENTRADA INVALIDA, NAO DIGITE LETRAS, APENAS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n Retornando ao Menu inicial\n");
+        Limpa_Buffer_i();   // Caso o danado digite mais que 100 caracteres. E dá mais segurança.
+        return;
+    }
+    switch (op)
+    {
+    case 0:
+        imprimir_p_tipo(Parafina);
+        break;
+    case 1:
+        imprimir_p_tipo(Leash);
+        break;
+    case 2:
+        imprimir_p_tipo(Quilha);
+        break;
+    case 3:
+        imprimir_p_tipo(Deck);
+        break;
+    case 4:
+        printf("Retornando ao Menu inicial.\n");
+        break;
+    default:
+        printf("\n======ENTRADA INVALIDA, DIGITE APENAS OS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n Retornando ao Menu inicial\n");
+        break;
+    }
 }
 
 // Função responsável por liberar a memória de tudo que foi alocado ao fechar o programa.
@@ -307,9 +342,9 @@ int main() {
     {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
         char buffer[10];
-
-        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 5)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Sair\n");
-        
+        printf("\n-------------------------------------MENU INICIAL----------------------------------------");
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 6)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Sair\n");
+        printf("Sua escolha: ");
         fgets(buffer, sizeof(buffer), stdin);
 
         // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[10].
@@ -322,29 +357,32 @@ int main() {
         switch (op)
         {
             case 0:     // O usuário deseja adicionar Parafina ao estoque.
-                printf("Voce selecionou Parafina.\n");
+                printf("\nVoce selecionou Parafina.\n");
                 gerenciar_estoque(Parafina, "Parafina");
                 break;
             case 1:     // O usuário deseja adicionar Leash ao estoque.
-                printf("Voce selecionou Leash.\n");
+                printf("\nVoce selecionou Leash.\n");
                 gerenciar_estoque(Leash, "Leash");
                 break;
             case 2:     // O usuário deseja adicionar Quilha ao estoque.
-                printf("Voce selecionou Quilha.\n");
+                printf("\nVoce selecionou Quilha.\n");
                 gerenciar_estoque(Quilha, "Quilha");
                 break;
             case 3:     // O usuário deseja adicionar Deck ao estoque.
-                printf("Voce selecionou Deck.\n");
+                printf("\nVoce selecionou Deck.\n");
                 gerenciar_estoque(Deck, "Deck");
                 break;
             case 4:     //Usuário deseja imprimir todos os produtos do estoque.
-                imprimir(Parafina);
-                imprimir(Leash);
-                imprimir(Quilha);
-                imprimir(Deck);
+                imprimir_p_tipo(Parafina);
+                imprimir_p_tipo(Leash);
+                imprimir_p_tipo(Quilha);
+                imprimir_p_tipo(Deck);
                 break;
-            case 5:     // Usuário deseja encerrar o programa.
-                printf("Programa encerrado...\n");
+            case 5:     // Usuário deseja imprimir todos os produtos por tipo.
+                Menu_imprimir_p_tipo(Parafina, Leash, Quilha, Deck);
+                break;
+            case 6:     // Usuário deseja encerrar o programa.
+                printf("\nPrograma encerrado...\n");
                 valid = 0;
                 Liberar_memoria(Parafina);
                 free(Parafina);
@@ -357,9 +395,10 @@ int main() {
                 break;
             
             default:
-                printf("\n======POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 4======\n");
+                printf("\n======POR FAVOR, DIGITE -APENAS NUMEROS- ENTRE 0 E 6======\n");
                 break;
         }
     }
+    printf("Programa Encerrado");
     return 0;
 }
