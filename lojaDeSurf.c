@@ -1,11 +1,15 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<math.h>
 
 # define PREFIXO_ID_PRODUTO_PARAFINA 100000
 # define PREFIXO_ID_PRODUTO_QUILHA 200000
 # define PREFIXO_ID_PRODUTO_LEASH 300000
 # define PREFIXO_ID_PRODUTO_DECK 400000
+
+// Definindo valor de tolerância para comparar valores em Reais (Float)
+# define TOLERANCIA 0.001
 
 typedef struct NO{
     int id;
@@ -40,6 +44,7 @@ int id_unica_produto (char * tipo);
 int obter_tamanho_max_da_caixa(char * tipo);
 void gerenciar_estoque(Pilha * pilha, char * tipo);
 void imprimir_p_tipo(Pilha * Tipo);
+void imprimi_p_intervalo_de_preco(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck);
 void Liberar_memoria(Pilha * pilha);
 
 //  Futuras versões os contadores incrementais de IDs serão encapsulados em Structs.
@@ -230,6 +235,108 @@ void Menu_imprimir_p_tipo (Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *
     }
 }
 
+void imprimi_p_intervalo_de_preco(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck) {
+    char buffer[100];
+    float menor_valor, maior_valor;
+    int Escolha;
+    Pilha * Tipo;
+
+    printf("\n__________FILTRO DE EXIBICAO DE PRODUTOS POR TIPO__________\n");
+
+    printf("Infome qual o tipo de produto que voce deseja filtrar (Escolha de 0 a 4):\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Cancelar e voltar ao Menu Inicial.\n");
+    while (1)
+    {
+        printf("Sua escolha: ");
+        fgets(buffer, sizeof(buffer), stdin);
+
+        // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[10].
+        if (sscanf(buffer, "%i", &Escolha) != 1) {
+            printf("\n======ENTRADA INVALIDA, NAO DIGITE LETRAS, APENAS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n");
+            Limpa_Buffer_i();   // Caso o danado digite mais que 10 caracteres. E dá mais segurança.
+            continue;
+        }
+
+        switch (Escolha)
+        {
+        case 0:
+            Tipo = Parafina;
+            break;
+        case 1:
+            Tipo = Leash;
+            break;
+        case 2:
+            Tipo = Quilha;
+            break;
+        case 3:
+            Tipo = Deck;
+            break;
+        case 4:
+            return;
+        
+        default:
+            break;
+        }
+        break;
+    }
+    
+    printf("\nA seguir, voce deve informar o intervalo de valor que voce deseja filtrar para o produto [%s].\nDIGITE UM PONTO FINAL PARA DIFERENCIAR REAIS DE CENTAVOS. EX.: 2.99, E NAO 2,99.\n", Tipo->tipo);
+    while (1) {
+        printf("\nDigite o -MENOR VALOR- que voce deseja ver na lista: ");
+        fgets(buffer, sizeof(buffer), stdin);
+    
+        // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[10].
+        if (sscanf(buffer, "%f", &menor_valor) != 1) {
+            printf("\n======ENTRADA INVALIDA, NAO DIGITE LETRAS, APENAS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n");
+            Limpa_Buffer_i();   // Caso o danado digite mais que 10 caracteres. E dá mais segurança.
+            continue;
+        }
+        printf("\nAgora digite o -MAIOR VALOR- que voce deseja ver na lista: ");
+        fgets(buffer, sizeof(buffer), stdin);
+    
+        // MÉTODO: Receber valores a partir de um método de fgets e sscanf intermdiado por buffer[10].
+        if (sscanf(buffer, "%f", &maior_valor) != 1) {
+            printf("\n======ENTRADA INVALIDA, NAO DIGITE LETRAS, APENAS NUMEROS DAS OPCOES DISPONIVEIS NO MENU======\n");
+            Limpa_Buffer_i();   // Caso o danado digite mais que 10 caracteres. E dá mais segurança.
+            continue;
+
+        }
+        if (fabsf(menor_valor - maior_valor) > TOLERANCIA && menor_valor > maior_valor) {
+            printf("\nXX | AVISO, O PRIMEIRO VALOR DEVE SER O MENOR, E O SEGUNDO O MAIOR | XX\n");
+            Limpa_Buffer_i();
+            continue;
+        }
+        break;
+    }
+
+    Caixa *Caixa = Tipo->topo;
+    int N_caixa = 1;
+    if (Caixa == NULL) printf("\n\t\t      XX | ESTA PILHA ESTA VAZIA | XX\n");
+
+    while (Caixa != NULL) {
+        NO *Produto = Caixa->inicio_da_lista;
+        int Nao_Existe_Produto = 1;
+        printf("\n------- CAIXA NUMERO: %d | TIPO: %s | ID: %d | ESPACO RESTANTE: %i -------\n", N_caixa, Caixa->tipo, Caixa->id, Caixa->espaco_restante);
+        printf("                        |    ---- PRODUTOS ----\n");
+        while (Produto != NULL) {
+            if (Produto->valor >= menor_valor && Produto->valor <= maior_valor) {
+                printf("                        | Tipo:............. %s\n", Produto->tipo);
+                printf("                        | Descricao:........ %s\n", Produto->descricao);
+                printf("                        | Valor:............ %.2f Reais\n", Produto->valor);
+                printf("                        | ID:............... %i\n", Produto->id);
+                printf("                        |\n");
+                Nao_Existe_Produto = 0;
+            }
+            Produto = Produto->prox;
+        }
+        if (Nao_Existe_Produto) printf("\n       XX | ESTA CAIXA NÃO POSSUI PRODUTOS PARA O FILTRO FORNECIDO | XX\n");
+        Caixa = Caixa->prox;
+        N_caixa++;
+    }
+    printf("\n                    ------- FIM DA PILHA DE %s -------\n", Tipo->tipo);
+    
+
+}
+
 // Função responsável por liberar a memória de tudo que foi alocado ao fechar o programa.
 void Liberar_memoria(Pilha * pilha) {
     if (pilha->topo == NULL) return;
@@ -343,7 +450,7 @@ int main() {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
         char buffer[10];
         printf("\n-------------------------------------MENU INICIAL----------------------------------------");
-        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 6)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Sair\n");
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 7)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Filtrar Produtos por preco\n7 - Fechar programa\n");
         printf("Sua escolha: ");
         fgets(buffer, sizeof(buffer), stdin);
 
@@ -381,7 +488,10 @@ int main() {
             case 5:     // Usuário deseja imprimir todos os produtos por tipo.
                 Menu_imprimir_p_tipo(Parafina, Leash, Quilha, Deck);
                 break;
-            case 6:     // Usuário deseja encerrar o programa.
+            case 6:     // Usuário deseja imprimir um tipo pelo intervalo de preço.
+                imprimi_p_intervalo_de_preco(Parafina, Leash, Quilha, Deck);
+                break;
+            case 7:     // Usuário deseja encerrar o programa.
                 printf("\nPrograma encerrado...\n");
                 valid = 0;
                 Liberar_memoria(Parafina);
