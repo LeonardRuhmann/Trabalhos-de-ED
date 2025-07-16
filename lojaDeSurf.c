@@ -46,6 +46,11 @@ void gerenciar_estoque(Pilha * pilha, char * tipo);
 void imprimir_p_tipo(Pilha * Tipo);
 void imprimi_p_intervalo_de_preco(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck);
 void Liberar_memoria(Pilha * pilha);
+void gerenciar_compra_produto(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck);
+void comprar_produto(Pilha * pilha, int id_produto);
+NO * buscar_produto_por_id(Pilha * pilha, int id_produto);
+
+
 
 //  Futuras versões os contadores incrementais de IDs serão encapsulados em Structs.
 //  Contadores Incrementais para IDs de produtos.
@@ -58,6 +63,146 @@ void Limpa_Buffer_i () {
     int a;
     while ((a = getchar()) != '\n' && a != EOF);
 }
+//Essa função é responsável por caminhar na lista
+NO * caminhar_na_lista(NO * produto, int id_produto){
+    while (produto != NULL && produto->id != id_produto)
+    {
+        produto = produto->prox;
+    }
+    return produto;
+}
+// Essa função lida com todo o trabalho de ponteiros das listas, caixas e pilhas e retorna o produto ou NULL(Caso não exista)
+NO * buscar_produto_por_id(Pilha * pilha, int id_produto){
+    Pilha * pilha_auxiliar = malloc(sizeof(Pilha));
+    pilha_auxiliar->topo = NULL;
+    pilha_auxiliar->tipo = pilha->tipo;
+
+    Caixa * caixa_atual = pilha->topo;
+    Caixa * caixa_onde_o_produto_foi_encontrado = NULL;
+    NO * produto_encontrado = NULL;
+
+    while(caixa_atual != NULL){ //// Irá percorrer pelas caixas até encontrar o produto
+
+        produto_encontrado = caminhar_na_lista(caixa_atual->inicio_da_lista, id_produto);
+
+        if (produto_encontrado !=  NULL) { //Encontramos o produto! 
+
+            caixa_onde_o_produto_foi_encontrado = caixa_atual;
+            break;
+        }
+        //Caso não seja encontrado, próxima caixa
+
+        pilha->topo = caixa_atual->prox;
+        caixa_atual->prox = pilha_auxiliar->topo;
+        pilha_auxiliar->topo = caixa_atual;
+        caixa_atual = pilha->topo;
+    }
+
+    if (produto_encontrado == NULL) { //Produto não encontrado!
+
+        //Desempilhar a pilha auxiliar para empilhar a principal
+        //Refatorar essa parte abaixo: pois tem o mesmo código na linha 143 a 148
+
+        while (pilha_auxiliar->topo != NULL) {
+            Caixa* caixa_a_devolver = pilha_auxiliar->topo;
+            pilha_auxiliar->topo = caixa_a_devolver->prox;
+            caixa_a_devolver->prox = pilha->topo;
+            pilha->topo = caixa_a_devolver;
+        }
+        
+        free(pilha_auxiliar);
+        return NULL; 
+    } else {
+        
+        
+        if (produto_encontrado->ant != NULL){ //O produto NÃO é o primeiro elemento
+            produto_encontrado->ant->prox = produto_encontrado->prox;
+        }
+        else { //O produto é o primeiro elemento
+            caixa_onde_o_produto_foi_encontrado->inicio_da_lista = produto_encontrado->prox;
+        }
+        
+        if (produto_encontrado->prox != NULL) {//O produto NÃO é o último elemento
+            produto_encontrado->prox->ant = produto_encontrado->ant;
+
+        }
+        else {//O produto é o último elemento
+            caixa_onde_o_produto_foi_encontrado->fim_da_lista = produto_encontrado->ant;
+        }
+
+        caixa_onde_o_produto_foi_encontrado->espaco_restante++;
+        
+        // Isola completamente o nó para um retorno seguro
+        produto_encontrado->ant = NULL;
+        produto_encontrado->prox = NULL;
+    }
+
+        //Fazemos um loop para encaixar um produto na caixa da pilha auxiliar onde removemos o produto para a pilha principal até sobrar a última caixa na pilha auxiliar.
+        //Refatorar essa parte abaixo:
+        while (pilha_auxiliar->topo != NULL)
+        {
+            Caixa * caixa_a_devolver = pilha_auxiliar->topo;
+            pilha_auxiliar->topo = pilha_auxiliar->topo->prox;
+            caixa_a_devolver->prox = pilha->topo;
+            pilha->topo = caixa_a_devolver;
+        }
+        free(pilha_auxiliar);
+
+    return produto_encontrado;
+
+}
+
+//Essa função é responsável por buscar o produto e printar este na tela
+void comprar_produto(Pilha * pilha, int id_produto){
+    NO * produto = buscar_produto_por_id(pilha, id_produto);
+
+    if(produto != NULL){
+        printf("O produto comprado foi:\n");
+        printf("ID: %d\n", produto->id);
+        printf("Tipo: %s\n", produto->tipo);
+        printf("Descrição: %s\n", produto->descricao);
+        printf("Valor: %.2f\n", produto->valor);
+    } else {
+        printf("AVISO: Produto com ID %d nao foi encontrado no estoque.\n", id_produto);
+    }
+    
+}
+//Função que gerencia todas as opções de compra de um produto
+void gerenciar_compra_produto(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck){
+    int escolha;
+    int id_do_produto;
+    printf("Qual é o tipo do produto que você deseja comprar?\n");
+    printf("0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4- Voltar ao Menu inicial.\nSua Escolha: ");
+    scanf("%d", &escolha);
+    Limpa_Buffer_i();
+    if(escolha == 4){
+        printf("Retornando ao Menu inicial.\n");
+        return;
+    }
+
+    printf("\nPor favor, digite o código do produto\nCodigo do produto:");
+    scanf("%d", &id_do_produto);
+    Limpa_Buffer_i();
+    
+    
+    switch (escolha)
+    {
+    case 0:
+        comprar_produto(Parafina, id_do_produto);
+        break;
+    case 1:
+        comprar_produto(Leash, id_do_produto);
+        break;
+    case 2:
+        comprar_produto(Quilha, id_do_produto);
+        break;
+    case 3:
+        comprar_produto(Deck, id_do_produto);
+        break;
+    default:
+        break;
+    }
+};
 
 // Função de criar caixas de produtos.
 Caixa * inicializar_caixa(char * tipo) {
@@ -450,7 +595,7 @@ int main() {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
         char buffer[10];
         printf("\n-------------------------------------MENU INICIAL----------------------------------------");
-        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 7)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Filtrar Produtos por preco\n7 - Fechar programa\n");
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 7)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Filtrar Produtos por preco\n7 - Comprar Produto\n8 - Fechar programa\n");
         printf("Sua escolha: ");
         fgets(buffer, sizeof(buffer), stdin);
 
@@ -491,7 +636,11 @@ int main() {
             case 6:     // Usuário deseja imprimir um tipo pelo intervalo de preço.
                 imprimi_p_intervalo_de_preco(Parafina, Leash, Quilha, Deck);
                 break;
-            case 7:     // Usuário deseja encerrar o programa.
+            case 7:
+                gerenciar_compra_produto(Parafina, Leash, Quilha, Deck);
+                //Processo de compra de produto
+                break;
+            case 8:     // Usuário deseja encerrar o programa.
                 printf("\nPrograma encerrado...\n");
                 valid = 0;
                 Liberar_memoria(Parafina);
