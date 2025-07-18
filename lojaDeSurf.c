@@ -98,58 +98,55 @@ NO * buscar_produto_por_id(Pilha * pilha, int id_produto){
         caixa_atual = pilha->topo;
     }
 
-    if (produto_encontrado == NULL) { //Produto não encontrado!
+    if (produto_encontrado != NULL) { //Produto Encontrado!
 
-        //Desempilhar a pilha auxiliar para empilhar a principal
-        //Refatorar essa parte abaixo: pois tem o mesmo código na linha 143 a 148
+        // E se o produto que encontramos esta na PRIMEIRA CAIXA, mas ela so tem UM produto?
+        if(produto_encontrado->ant == NULL && produto_encontrado->prox == NULL) {
+            // Garante que inicio e fim sejam nulos, pois venderemos o unico produto que eh inicio e fim ao mesmo tempo.
+            caixa_onde_o_produto_foi_encontrado->inicio_da_lista = NULL;
+            caixa_onde_o_produto_foi_encontrado->fim_da_lista = NULL;
 
-        while (pilha_auxiliar->topo != NULL) {
-            Caixa* caixa_a_devolver = pilha_auxiliar->topo;
-            pilha_auxiliar->topo = caixa_a_devolver->prox;
-            caixa_a_devolver->prox = pilha->topo;
-            pilha->topo = caixa_a_devolver;
-        }
-        
-        free(pilha_auxiliar);
-        return NULL; 
-    } else {
-        
-        
-        if (produto_encontrado->ant != NULL){ //O produto NÃO é o primeiro elemento
-            produto_encontrado->ant->prox = produto_encontrado->prox;
-        }
-        else { //O produto é o primeiro elemento
-            caixa_onde_o_produto_foi_encontrado->inicio_da_lista = produto_encontrado->prox;
-        }
-        
-        if (produto_encontrado->prox != NULL) {//O produto NÃO é o último elemento
-            produto_encontrado->prox->ant = produto_encontrado->ant;
+            // Precisamos eliminar a caixa, NUNCA deve haver uma caixa vazia.
+            Caixa *antigo_topo = caixa_onde_o_produto_foi_encontrado;
+            pilha->topo = caixa_onde_o_produto_foi_encontrado->prox;
+            caixa_onde_o_produto_foi_encontrado = NULL;
+            free(antigo_topo);
+            
+        } else { // Se nao, ele so pode ser ou inicio, ou fim, ou meio.
 
-        }
-        else {//O produto é o último elemento
-            caixa_onde_o_produto_foi_encontrado->fim_da_lista = produto_encontrado->ant;
+            if (produto_encontrado->ant != NULL){ //O produto NÃO é o primeiro elemento
+                produto_encontrado->ant->prox = produto_encontrado->prox;
+            }
+            else { //O produto é o primeiro elemento
+                caixa_onde_o_produto_foi_encontrado->inicio_da_lista = produto_encontrado->prox;
+                caixa_onde_o_produto_foi_encontrado->inicio_da_lista->ant = NULL;
+            }
+            
+            if (produto_encontrado->prox != NULL) {//O produto NÃO é o último elemento
+                produto_encontrado->prox->ant = produto_encontrado->ant;
+            }
+            else {//O produto é o último elemento
+                caixa_onde_o_produto_foi_encontrado->fim_da_lista = produto_encontrado->ant;
+                caixa_onde_o_produto_foi_encontrado->fim_da_lista->prox = NULL;
+            }
+            caixa_onde_o_produto_foi_encontrado->espaco_restante++;
         }
 
-        caixa_onde_o_produto_foi_encontrado->espaco_restante++;
         
         // Isola completamente o nó para um retorno seguro
         produto_encontrado->ant = NULL;
         produto_encontrado->prox = NULL;
     }
 
-        //Fazemos um loop para encaixar um produto na caixa da pilha auxiliar onde removemos o produto para a pilha principal até sobrar a última caixa na pilha auxiliar.
-        //Refatorar essa parte abaixo:
-        while (pilha_auxiliar->topo != NULL)
-        {
-            Caixa * caixa_a_devolver = pilha_auxiliar->topo;
-            pilha_auxiliar->topo = pilha_auxiliar->topo->prox;
-            caixa_a_devolver->prox = pilha->topo;
-            pilha->topo = caixa_a_devolver;
-        }
-        free(pilha_auxiliar);
-
+    while (pilha_auxiliar->topo != NULL)
+    {
+        Caixa * caixa_a_devolver = pilha_auxiliar->topo;
+        pilha_auxiliar->topo = pilha_auxiliar->topo->prox;
+        caixa_a_devolver->prox = pilha->topo;
+        pilha->topo = caixa_a_devolver;
+    }
+    free(pilha_auxiliar);
     return produto_encontrado;
-
 }
 
 //Essa função é responsável por buscar o produto e printar este na tela
