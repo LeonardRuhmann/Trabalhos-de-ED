@@ -49,6 +49,7 @@ void Liberar_memoria(Pilha * pilha);
 void gerenciar_compra_produto(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck);
 void comprar_produto(Pilha * pilha, int id_produto);
 NO * buscar_produto_por_id(Pilha * pilha, int id_produto);
+void Preencher_caixa(Pilha **Pilha, Caixa **Caixa_produto_encontrado);
 
 
 
@@ -146,7 +147,65 @@ NO * buscar_produto_por_id(Pilha * pilha, int id_produto){
         pilha->topo = caixa_a_devolver;
     }
     free(pilha_auxiliar);
+    // So preenchemos a caixa que teve o produto vendido se ele realmente foi achado e vendido, logo, ha um espaco para preencher.
+    if (produto_encontrado != NULL) Preencher_caixa(&pilha, &caixa_onde_o_produto_foi_encontrado);
     return produto_encontrado;
+}
+
+// Esta função eh responsavel por preencher a caixa que teve o produto vendido com um produto da caixa do topo da lista. NUNCA deve haver uma caixa vazia e SEMPRE as caixas abaixo do topo devem estar cheias.
+void Preencher_caixa(Pilha **Pilha, Caixa **Caixa_produto_encontrado) {
+    if(*Caixa_produto_encontrado == NULL || (*Pilha)->topo->id == (*Caixa_produto_encontrado)->id) return; // Se a caixa onde o produto vendido foi a caixa do topo, nao usamos a funcao.
+
+    // Caixa que vai doar o produto.
+    Caixa * Caixa_Doadora = (*Pilha)->topo;
+    // Produto que sera doado.
+    NO * Produto_a_Doar = Caixa_Doadora->inicio_da_lista;
+    
+    // Se a caixa doadora (Topo) tiver apenas um produto, ela deve ser liberada da memoria.
+    if (Caixa_Doadora->inicio_da_lista->id == Caixa_Doadora->fim_da_lista->id) {
+        Caixa_Doadora->inicio_da_lista = NULL;
+        Caixa_Doadora->fim_da_lista = NULL;
+
+        // A nova caixa TOPO da pilha sera a que esta abaixo dela.
+        Caixa * Antigo_Topo = Caixa_Doadora;
+        (*Pilha)->topo = Caixa_Doadora->prox;
+        Caixa_Doadora = NULL;
+
+        free(Antigo_Topo);
+    } else {    // Se for qualquer caixa, inclusive a do topo desde que tenha mais de um produto...
+        // Vamos Doar o produto do seu inicio.
+        // Novo Inicio_da_lista sera o seguinte a ele.
+        Caixa_Doadora->inicio_da_lista = Produto_a_Doar->prox;
+        // O anterior do Novo Inicio_a_lista sera nulo.
+        Caixa_Doadora->inicio_da_lista->ant = NULL;
+        // Tiramos o produto da caixa doadora, agora o espaco restante eh maior.
+        Caixa_Doadora->espaco_restante++;
+    }
+
+    Produto_a_Doar->prox = NULL;    // Isolando o Produto com seguranca.
+
+    // Verificando casos mais faceis
+    if(Produto_a_Doar->valor <= (*Caixa_produto_encontrado)->inicio_da_lista->valor) { // O produto eh mais barato que o inicio da lista?
+        Produto_a_Doar->prox = (*Caixa_produto_encontrado)->inicio_da_lista;
+        (*Caixa_produto_encontrado)->inicio_da_lista->ant = Produto_a_Doar;
+        (*Caixa_produto_encontrado)->inicio_da_lista = Produto_a_Doar;
+        
+    } else if (Produto_a_Doar->valor >= (*Caixa_produto_encontrado)->fim_da_lista->valor) { // O produto eh mais caro que o fim da lista?
+        Produto_a_Doar->ant = (*Caixa_produto_encontrado)->fim_da_lista;
+        (*Caixa_produto_encontrado)->fim_da_lista->prox = Produto_a_Doar;
+        (*Caixa_produto_encontrado)->fim_da_lista = Produto_a_Doar;
+        
+    } else { // Produto so pode estar no meio.
+        NO * Aux_Produto_caixa_Receptora = (*Caixa_produto_encontrado)->inicio_da_lista;
+        while (Aux_Produto_caixa_Receptora != NULL && Produto_a_Doar->valor >= Aux_Produto_caixa_Receptora->valor) {
+            Aux_Produto_caixa_Receptora = Aux_Produto_caixa_Receptora->prox;
+        }
+        Aux_Produto_caixa_Receptora->ant->prox = Produto_a_Doar;
+        Produto_a_Doar->ant = Aux_Produto_caixa_Receptora->ant;
+        Produto_a_Doar->prox = Aux_Produto_caixa_Receptora;
+        Aux_Produto_caixa_Receptora->ant = Produto_a_Doar;
+    }
+    (*Caixa_produto_encontrado)->espaco_restante--;
 }
 
 //Essa função é responsável por buscar o produto e printar este na tela
