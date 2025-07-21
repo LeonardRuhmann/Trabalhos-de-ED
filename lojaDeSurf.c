@@ -36,6 +36,22 @@ typedef struct Pilha
     struct Caixa * topo;
 }Pilha;
 
+typedef struct Fila
+{
+    char nome[100];
+    int cpf;
+    int cep;
+    int N_casa;
+    char rua[100];
+    char complemento[100];
+    int id;
+    char *tipo;
+    char *descricao;
+    float valor;
+    struct Fila *Prox;
+    struct Fila *Ant;
+}Fila;
+
 // Protótipos de função (Para que o compilador conheca de antemão quem são as funções):
 Caixa * inicializar_caixa(char * tipo);
 void add_produto_na_lista(char *tipo, NO ** inicio_da_lista, NO **fim_da_lista);
@@ -50,8 +66,14 @@ void gerenciar_compra_produto(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilh
 void comprar_produto(Pilha * pilha, int id_produto);
 NO * buscar_produto_por_id(Pilha * pilha, int id_produto);
 void Preencher_caixa(Pilha **Pilha, Caixa **Caixa_produto_encontrado);
+void Add_Fila_Entrega(NO *Produto);
+void Registrar_Saida_de_Produto();
+void Remover_da_Fila();
+void Imprimir_fila();
 
-
+// Ponteiro do Inicio da lista de produtos A ENTREGAR.
+Fila * Inicio_Fila_de_Entrega = NULL;
+Fila * Fim_Fila_de_Entrega = NULL;
 
 //  Futuras versões os contadores incrementais de IDs serão encapsulados em Structs.
 //  Contadores Incrementais para IDs de produtos.
@@ -213,16 +235,163 @@ void comprar_produto(Pilha * pilha, int id_produto){
     NO * produto = buscar_produto_por_id(pilha, id_produto);
 
     if(produto != NULL){
-        printf("O produto comprado foi:\n");
+        printf("\nO produto comprado foi:\n");
         printf("ID: %d\n", produto->id);
         printf("Tipo: %s\n", produto->tipo);
         printf("Descrição: %s\n", produto->descricao);
         printf("Valor: %.2f\n", produto->valor);
+        Add_Fila_Entrega(produto);
     } else {
         printf("AVISO: Produto com ID %d nao foi encontrado no estoque.\n", id_produto);
     }
     
 }
+
+void Add_Fila_Entrega(NO * Produto) {
+
+    char buffer[100];
+
+    Fila * Nova_Entrega = malloc(sizeof(Fila)); // Cria uma nova Entrega.
+    Nova_Entrega->Prox = NULL; // Garantia de seguranca.
+    Nova_Entrega->Ant = NULL;  // Garantia de seguranca.
+
+    // Setando valores do produto comprado aa compra.
+    Nova_Entrega->id = Produto->id;
+    Nova_Entrega->tipo = Produto->tipo;
+    Nova_Entrega->descricao = Produto->descricao;
+    Nova_Entrega->valor = Produto->valor;
+
+    printf("\nAgora, digite algumas informacoes de compra para inserir para a fila de entregas:\n");
+
+   // Entrada do nome
+    printf("Digite o Nome do Comprador:\n");
+    fgets(buffer, sizeof(buffer), stdin);
+    if (!strchr(buffer, '\n')) Limpa_Buffer_i();
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strncpy(Nova_Entrega->nome, buffer, sizeof(Nova_Entrega->nome));
+
+    // CPF
+    printf("Digite o CPF (apenas números):\n");
+    scanf("%d", &Nova_Entrega->cpf);
+    Limpa_Buffer_i();
+
+    // CEP
+    printf("Digite o CEP (apenas números):\n");
+    scanf("%d", &Nova_Entrega->cep);
+    Limpa_Buffer_i();
+
+    // Rua
+    printf("Digite a Rua do Comprador:\n");
+    fgets(buffer, sizeof(buffer), stdin);
+    if (!strchr(buffer, '\n')) Limpa_Buffer_i();
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strncpy(Nova_Entrega->rua, buffer, sizeof(Nova_Entrega->rua));
+
+    // Número da casa
+    printf("Digite o número da Casa ou AP:\n");
+    scanf("%d", &Nova_Entrega->N_casa);
+    Limpa_Buffer_i();
+
+    // Complemento
+    printf("Digite um complemento:\n");
+    fgets(buffer, sizeof(buffer), stdin);
+    if (!strchr(buffer, '\n')) Limpa_Buffer_i();
+    buffer[strcspn(buffer, "\n")] = '\0';
+    strncpy(Nova_Entrega->complemento, buffer, sizeof(Nova_Entrega->complemento));
+
+    // Adicionando na fila de entrega
+    // A ordem Abstrata dessa fila seria NULL<--[fim]<-->[Meio]<-->[inicio]-->NULL. Entao, trabalhe abstratamente com essa ordem
+    // Se nao, ceh nao vai entender meu codigo.
+    if (Inicio_Fila_de_Entrega == NULL) {
+        Inicio_Fila_de_Entrega = Nova_Entrega;
+        Fim_Fila_de_Entrega = Nova_Entrega;
+    }
+    else {
+        Fim_Fila_de_Entrega->Ant = Nova_Entrega;    // NULL<--[Novo]<---[Fim].
+        Nova_Entrega->Prox = Fim_Fila_de_Entrega;   // NULL<--[Novo]<-->[fim].
+        Fim_Fila_de_Entrega = Fim_Fila_de_Entrega->Ant; //~~~~~~^ Novo fim, ultimo a sair.
+    }
+    printf("\nProduto adicionado à fila de entregas com sucesso!\n");
+}
+
+// Exibe toda a lista de entrega pendente.
+void Imprimir_fila() {
+    if(Inicio_Fila_de_Entrega == NULL) {
+        printf("Fila vazia!\n");
+        return;
+    }
+
+    Fila * Aux = Inicio_Fila_de_Entrega;
+    int Num = 0;
+
+    printf("\nLISTA DE PRODUTO(S) A ser/SEREM ENTREGUE(S)\n");
+
+    // A ordem Abstrata dessa fila seria NULL<--[fim]<-->[Meio]<-->[inicio]-->NULL. Entao, trabalhe abstratamente com essa ordem
+    // Se nao, ceh nao vai entender meu codigo.
+    while (Aux != NULL)
+    {
+        printf("Nome do comprador: %s\n", Aux->nome);
+        printf("CPF: %i\n", Aux->cpf);
+        printf("CEP: %i\n", Aux->cep);
+        printf("Rua: %s\n", Aux->rua);
+        printf("Numero da casa ou AP: %i\n", Aux->N_casa);
+        printf("Complemento: %s\n", Aux->complemento);
+        printf("____________________\n");
+        printf("O produto comprado foi:\n");
+        printf("ID: %i\n", Aux->id);
+        printf("Tipo: %s\n", Aux->tipo);
+        printf("Descrição: %s\n", Aux->descricao);
+        printf("Valor: %.2f\n", Aux->valor);
+        printf("====================\n");
+
+        Num++;
+        Aux = Aux->Ant;
+    }
+    printf("\nTOTAL DE ENTREGAS PENDENTES: %i\n", Num);
+}
+
+// Remove produtos do início da fila de entrega.
+void Remover_da_Fila() {
+    // A ordem Abstrata dessa fila seria NULL<--[fim]<-->[Meio]<-->[inicio]-->NULL. Entao, trabalhe abstratamente com essa ordem
+    // Se nao, ceh nao vai entender meu codigo.
+    if (Inicio_Fila_de_Entrega == NULL) {
+        printf("Fila vazia!\n");
+        return;
+    }
+
+    Fila * Entrega_Atual = Inicio_Fila_de_Entrega;
+
+    if(Entrega_Atual->Ant == NULL) { // So ha uma entrega?
+        Inicio_Fila_de_Entrega = NULL;
+        Fim_Fila_de_Entrega = NULL;
+
+    } else { // Nao, ha mais de uma.
+        Inicio_Fila_de_Entrega = Inicio_Fila_de_Entrega->Ant;
+        Inicio_Fila_de_Entrega->Prox = NULL;
+        Entrega_Atual->Ant = NULL;
+    }
+
+    Imprimir_fila();
+    free(Entrega_Atual);
+}
+
+void Registrar_Saida_de_Produto() {
+    char buffer[10];
+    int op;
+    printf("\nOs PROXIMOs PRODUTOs NA FILA DE ENTREGAS SAO:\n");
+    
+    Imprimir_fila();
+
+    printf("\nVOCE DESEJA REGISTRAR A SAIDA DO PRIMEIRO PARA A ENTREGA? (ESSA ACAO NAO PODE SER REVERTIDA)\n1 - Sim.\n0 - Nao.\nSua escolha: ");
+    fgets(buffer, sizeof(buffer), stdin);
+    if (!strchr(buffer, '\n')) Limpa_Buffer_i();
+    buffer[strcspn(buffer, "\n")] = '\0';
+
+    sscanf(buffer, "%i", &op);
+
+    if(op == 1) Remover_da_Fila();
+}
+
 //Função que gerencia todas as opções de compra de um produto
 void gerenciar_compra_produto(Pilha *Parafina, Pilha *Leash, Pilha *Quilha, Pilha *Deck){
     int escolha;
@@ -651,7 +820,7 @@ int main() {
         int op;     // Tipo de produto que o usuário selecionar para operar o estoque.
         char buffer[10];
         printf("\n-------------------------------------MENU INICIAL----------------------------------------");
-        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 7)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Filtrar Produtos por preco\n7 - Comprar Produto\n8 - Fechar programa\n");
+        printf("\nDigite qual opcao de produto voce deseja adicionar no estoque da loja (Opcoes de 0 a 10)\n0 - Parafina\n1 - Leash\n2 - Quilha\n3 - Deck\n4 - Exibir Estoque\n5 - Exibir Produtos por Tipo\n6 - Filtrar Produtos por preco\n7 - Comprar Produto\n8 - Exibir lista de Entrega\n9 - Registrar saida de uma entrega\n10 - Encerrar programa\n");
         printf("Sua escolha: ");
         fgets(buffer, sizeof(buffer), stdin);
 
@@ -696,7 +865,13 @@ int main() {
                 gerenciar_compra_produto(Parafina, Leash, Quilha, Deck);
                 //Processo de compra de produto
                 break;
-            case 8:     // Usuário deseja encerrar o programa.
+            case 8:
+                Imprimir_fila();
+                break;
+            case 9:
+                Registrar_Saida_de_Produto();
+                break;
+            case 10:     // Usuário deseja encerrar o programa.
                 printf("\nPrograma encerrado...\n");
                 valid = 0;
                 Liberar_memoria(Parafina);
